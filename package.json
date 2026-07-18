@@ -1,0 +1,12 @@
+{
+  "name": "letmecook",
+  "version": "1.0.0",
+  "description": "AI Meal Planner & Cooking To-Do List",
+  "scripts": {
+    "start": "http-server",
+    "dev": "http-server -p 8000"
+  },
+  "dependencies": {
+    "http-server": "^14.1.1"
+  }
+}

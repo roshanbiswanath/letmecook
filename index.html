@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LetMeCook 🍳 - AI Meal Planner & Cooking To-Do List</title>
+  <meta name="description" content="Generate a personalized cooking to-do list, meal plan, and grocery budget tracker powered by Gemini AI.">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- Top Header -->
+    <header class="main-header">
+      <div class="logo-area">
+        <span class="logo-emoji">🍳</span>
+        <div class="logo-text">
+          <h1>LetMeCook</h1>
+          <p>AI Meal Planner & Cooking To-Do List</p>
+        </div>
+      </div>
+      
+      <!-- API Key Status / Panel Toggle -->
+      <div class="api-status-container" id="apiKeyStatusContainer">
+        <div class="status-indicator loading" id="statusIndicator">
+          <i data-lucide="key-round"></i>
+          <span id="statusText">Checking API Key...</span>
+        </div>
+        <button class="icon-btn" id="toggleApiPanelBtn" title="API Key Settings">
+          <i data-lucide="settings"></i>
+        </button>
+      </div>
+    </header>
+    
+    <!-- API Settings Modal / Drawer -->
+    <div class="api-settings-panel hidden" id="apiSettingsPanel">
+      <div class="panel-header">
+        <h3>Gemini API Configuration</h3>
+        <button class="close-btn" id="closeApiPanelBtn">&times;</button>
+      </div>
+      <p class="panel-desc">We attempt to load your key automatically from a local <code>.env</code> file. Alternatively, paste it below (saved in your browser only).</p>
+      <div class="input-group">
+        <label for="apiKeyInput">Gemini API Key</label>
+        <div class="input-with-icon">
+          <i data-lucide="lock"></i>
+          <input type="password" id="apiKeyInput" placeholder="AIzaSy...">
+        </div>
+      </div>
+      <div class="panel-actions">
+        <button class="btn btn-secondary" id="clearKeyBtn">Clear Key</button>
+        <button class="btn btn-primary" id="saveKeyBtn">Save Key</button>
+      </div>
+    </div>
+    
+    <!-- Main Content Grid -->
+    <main class="main-content">
+      
+      <!-- Setup Stage (User Inputs) -->
+      <section class="setup-section" id="setupSection">
+        <div class="card glass-card form-card">
+          <div class="card-header">
+            <h2>Let's Plan Your Day 🍽️</h2>
+            <p>Tell us about your schedule, budget, and tastes, and our AI chef will cook up the perfect plan.</p>
+          </div>
+          
+          <form id="plannerForm">
+            <div class="form-grid">
+              
+              <!-- Daily Pace -->
+              <div class="form-group select-card-group">
+                <label class="group-label">Daily Pace & Schedule</label>
+                <div class="card-selector">
+                  <input type="radio" name="pace" id="paceRelaxed" value="relaxed">
+                  <label for="paceRelaxed" class="select-card">
+                    <i data-lucide="cup-soda" class="card-icon"></i>
+                    <span class="card-title">Relaxed</span>
+                    <span class="card-desc">Time to spare, elaborate meals</span>
+                  </label>
+                  
+                  <input type="radio" name="pace" id="paceModerate" value="moderate" checked>
+                  <label for="paceModerate" class="select-card">
+                    <i data-lucide="utensils" class="card-icon"></i>
+                    <span class="card-title">Moderate</span>
+                    <span class="card-desc">Balanced schedule, normal cooking</span>
+                  </label>
+                  
+                  <input type="radio" name="pace" id="paceBusy" value="busy">
+                  <label for="paceBusy" class="select-card">
+                    <i data-lucide="zap" class="card-icon"></i>
+                    <span class="card-title">Busy</span>
+                    <span class="card-desc">Short on time, < 20m recipes</span>
+                  </label>
+                </div>
+              </div>
+              
+              <!-- Dietary Preferences -->
+              <div class="form-group">
+                <label for="dietPreference">Dietary Preference</label>
+                <div class="custom-select-wrapper">
+                  <i data-lucide="leaf" class="select-icon"></i>
+                  <select id="dietPreference" class="custom-select">
+                    <option value="none">No Restrictions (Eat Everything)</option>
+                    <option value="vegetarian">Vegetarian</option>
+                    <option value="vegan">Vegan</option>
+                    <option value="keto">Keto</option>
+                    <option value="gluten-free">Gluten-Free</option>
+                  </select>
+                </div>
+              </div>
+              
+              <!-- Budget limit and Servings -->
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="budgetLimit">Budget Limit (USD)</label>
+                  <div class="input-with-icon">
+                    <i data-lucide="dollar-sign"></i>
+                    <input type="number" id="budgetLimit" min="5" max="500" value="25" required>
+                  </div>
+                  <span class="input-help">For the entire day's ingredients</span>
+                </div>
+                
+                <div class="form-group">
+                  <label for="servingSize">Servings Needed</label>
+                  <div class="input-with-icon">
+                    <i data-lucide="users"></i>
+                    <input type="number" id="servingSize" min="1" max="20" value="2" required>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Kitchen Equipment -->
+              <div class="form-group checkbox-group">
+                <label class="group-label">Kitchen Equipment Available</label>
+                <div class="checkbox-grid">
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="equipStove" value="Stove" checked>
+                    <span class="checkbox-custom"></span>
+                    <i data-lucide="heater" class="icon-sm"></i> Stove
+                  </label>
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="equipOven" value="Oven" checked>
+                    <span class="checkbox-custom"></span>
+                    <i data-lucide="oven" class="icon-sm"></i> Oven
+                  </label>
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="equipMicrowave" value="Microwave" checked>
+                    <span class="checkbox-custom"></span>
+                    <i data-lucide="waves" class="icon-sm"></i> Microwave
+                  </label>
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="equipAirFryer" value="Air Fryer">
+                    <span class="checkbox-custom"></span>
+                    <i data-lucide="wind" class="icon-sm"></i> Air Fryer
+                  </label>
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="equipBlender" value="Blender">
+                    <span class="checkbox-custom"></span>
+                    <i data-lucide="blend" class="icon-sm"></i> Blender
+                  </label>
+                </div>
+              </div>
+              
+              <!-- Ingredients to use up -->
+              <div class="form-group">
+                <label for="fridgeIngredients">Ingredients in your fridge/pantry (Optional)</label>
+                <div class="textarea-wrapper">
+                  <i data-lucide="egg" class="textarea-icon"></i>
+                  <textarea id="fridgeIngredients" placeholder="e.g., eggs, spinach, bread, chicken breast..." rows="2"></textarea>
+                </div>
+                <span class="input-help">We'll prioritize using these to save your budget!</span>
+              </div>
+              
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-large btn-glow" id="generateBtn">
+              <span>Generate Cooking Plan</span>
+              <i data-lucide="sparkles"></i>
+            </button>
+          </form>
+        </div>
+      </section>
+      
+      <!-- Generating / Loading State -->
+      <section class="loading-section hidden" id="loadingSection">
+        <div class="card glass-card loading-card">
+          <div class="chef-hat-animation">
+            <span class="steam-bubble">🍳</span>
+            <span class="steam-bubble">🥦</span>
+            <span class="steam-bubble">🌶️</span>
+            <div class="pot">
+              <div class="pot-body"></div>
+              <div class="pot-handle-l"></div>
+              <div class="pot-handle-r"></div>
+              <div class="pot-lid"></div>
+            </div>
+          </div>
+          <h2>Letting It Cook...</h2>
+          <p id="loadingStageText">Querying Gemini for personalized meal plans...</p>
+          <div class="progress-bar-container">
+            <div class="progress-bar-fill" id="loadingProgressBar"></div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Dashboard Stage (Results) -->
+      <section class="dashboard-section hidden" id="dashboardSection">
+        
+        <!-- Dashboard Toolbar -->
+        <div class="dashboard-toolbar">
+          <button class="btn btn-secondary" id="backToSetupBtn">
+            <i data-lucide="arrow-left"></i>
+            <span>Adjust Settings</span>
+          </button>
+          <h2>Your Cooking Dashboard 📋</h2>
+          <button class="btn btn-secondary" id="printDashboardBtn">
+            <i data-lucide="printer"></i>
+            <span>Print / Save PDF</span>
+          </button>
+        </div>
+        
+        <div class="dashboard-grid">
+          
+          <!-- Column 1: The Meal Plan -->
+          <div class="dashboard-column span-full">
+            <div class="section-title">
+              <i data-lucide="utensils-crosskeys"></i>
+              <h3>Today's Meal Plan</h3>
+            </div>
+            
+            <div class="meals-container" id="mealsContainer">
+              <!-- Dynamically populated meal cards (Breakfast, Lunch, Dinner) -->
+            </div>
+          </div>
+          
+          <!-- Column 2: Grocery List & Budget Feasibility -->
+          <div class="dashboard-column">
+            <div class="section-title">
+              <i data-lucide="shopping-basket"></i>
+              <h3>Grocery Checklist</h3>
+            </div>
+            
+            <div class="card glass-card grocery-card">
+              <p class="card-subtitle">Uncheck items you already have to update your budget feasibility.</p>
+              
+              <ul class="grocery-list" id="groceryList">
+                <!-- Dynamically populated list -->
+              </ul>
+              
+              <div class="budget-summary-box">
+                <div class="budget-header">
+                  <span>Estimated Total:</span>
+                  <span class="price-highlight" id="totalCostDisplay">$0.00</span>
+                </div>
+                
+                <div class="budget-meter-container">
+                  <div class="meter-labels">
+                    <span>Budget Utilized</span>
+                    <span id="budgetMeterPercent">0%</span>
+                  </div>
+                  <div class="meter-bar">
+                    <div class="meter-bar-fill" id="budgetMeterBar"></div>
+                  </div>
+                </div>
+                
+                <div class="budget-status-badge" id="budgetStatusBadge">
+                  <!-- Dynamic status content -->
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Column 3: Substitutions & Budget Hacks -->
+          <div class="dashboard-column">
+            <div class="section-title">
+              <i data-lucide="shuffle"></i>
+              <h3>Smart Substitutions</h3>
+            </div>
+            
+            <div class="card glass-card substitutions-card">
+              <p class="card-subtitle">Swap ingredients to save budget or match preferences.</p>
+              <div class="subs-list" id="subsList">
+                <!-- Dynamically populated substitution items -->
+              </div>
+            </div>
+          </div>
+          
+          <!-- Column 4: Cooking To-Do List -->
+          <div class="dashboard-column span-full">
+            <div class="section-title">
+              <i data-lucide="clipboard-check"></i>
+              <h3>Cooking To-Do List</h3>
+            </div>
+            
+            <div class="card glass-card checklist-card">
+              <div class="checklist-header">
+                <p class="card-subtitle">Tick off tasks as you prepare and cook. Use inline timers for cooking steps.</p>
+                <div class="checklist-progress">
+                  <span id="checklistProgressText">0 / 0 steps completed</span>
+                  <div class="checklist-progress-bar">
+                    <div class="checklist-progress-fill" id="checklistProgressFill"></div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="todo-categories" id="todoContainer">
+                <!-- Dynamically populated categorized to-do lists -->
+              </div>
+            </div>
+          </div>
+          
+        </div>
+      </section>
+      
+    </main>
+    
+    <!-- Floating Active Timer Widget -->
+    <div class="timer-widget hidden" id="timerWidget">
+      <div class="timer-header">
+        <span class="timer-title" id="timerTitle">Cooking Timer</span>
+        <button class="timer-close" id="closeTimerBtn">&times;</button>
+      </div>
+      <div class="timer-display" id="timerDisplay">00:00</div>
+      <div class="timer-controls">
+        <button class="timer-btn btn-play" id="startTimerBtn"><i data-lucide="play"></i></button>
+        <button class="timer-btn btn-pause hidden" id="pauseTimerBtn"><i data-lucide="pause"></i></button>
+        <button class="timer-btn btn-reset" id="resetTimerBtn"><i data-lucide="rotate-ccw"></i></button>
+      </div>
+      <div class="timer-visual-ring">
+        <div class="timer-ring-fill" id="timerRingFill"></div>
+      </div>
+    </div>
+    
+  </div>
+  
+  <!-- Audio context beep helper -->
+  <script>
+    // In-browser custom synth alarm for the timer so no audio file is needed
+    function playAlarm() {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // Simple alarm pattern (beep beep beep)
+        let time = audioCtx.currentTime;
+        for (let i = 0; i < 4; i++) {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(880, time); // A5 note
+          
+          gain.gain.setValueAtTime(0, time);
+          gain.gain.linearRampToValueAtTime(0.5, time + 0.05);
+          gain.gain.setValueAtTime(0.5, time + 0.25);
+          gain.gain.linearRampToValueAtTime(0, time + 0.3);
+          
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          
+          osc.start(time);
+          osc.stop(time + 0.3);
+          time += 0.4;
+        }
+      } catch (e) {
+        console.error("Failed to generate alarm sound", e);
+      }
+    }
+  </script>
+  
+  <!-- JavaScript Controller -->
+  <script src="app.js"></script>
+</body>
+</html>
